@@ -139,6 +139,16 @@ h1 { font-family:'Fredoka One',cursive; font-size:clamp(1.6rem,5vw,2.4rem);
 .spinner { width:36px; height:36px; border:3px solid rgba(255,255,255,.1); border-top-color:var(--accent4); border-radius:50%; animation:spin .8s linear infinite; }
 @keyframes spin { to { transform:rotate(360deg); } }
 .loading-msg { font-size:.9rem; font-weight:700; color:var(--muted); }
+
+.btn-quit {
+  position: absolute; top: 18px; left: 22px;
+  background: rgba(255,255,255,.07); border: 1.5px solid rgba(255,255,255,.1);
+  color: var(--muted); font-family: 'Fredoka One', cursive; font-size: .85rem;
+  padding: 5px 12px; border-radius: 99px; cursor: pointer; transition: all .2s;
+}
+.btn-quit:hover { background: rgba(255,107,107,.2); color: var(--accent); border-color: var(--accent); }
+  
+  
 </style>
 </head>
 <body>
@@ -187,6 +197,7 @@ h1 { font-family:'Fredoka One',cursive; font-size:clamp(1.6rem,5vw,2.4rem);
   <!-- QUIZ -->
   <div id="quizScreen">
     <span class="word-number" id="wordNumber"></span>
+    <button class="btn-quit" id="btnQuit">✕ 나가기</button>
     <div class="badge-row">
       <span class="lesson-tag" id="lessonTag"></span>
       <span class="retry-badge" id="retryBadge">🔁 재도전</span>
@@ -443,6 +454,16 @@ function checkAnswer() {
 }
 
 $('btnNext').onclick = nextWord;
+$('btnQuit').onclick = () => {
+  if (confirm('퀴즈를 종료하고 처음으로 돌아갈까요?')) {
+    $('progressWrap').style.display = 'none';
+    $('scoreBar').style.display = 'none';
+    showScreen('setup');
+  }
+};
+
+
+  
 function nextWord() { currentIdx++; if (currentIdx >= shuffled.length) showResult(); else loadWord(false); }
 
 async function showResult() {
