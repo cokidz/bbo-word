@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>영어 스펠링 퀴즈</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 24px;
+    padding: 28px 24px;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  h1 { font-size: 1.6rem; color: #4a3f8f; text-align: center; }
+  h2 { font-size: 1.1rem; color: #555; text-align: center; }
+
+  /* Setup */
+  #setup-screen { gap: 16px; }
+  label { font-size: 0.9rem; color: #666; font-weight: 600; }
+  input[type=text], select {
+    width: 100%; padding: 12px 14px; border: 2px solid #ddd;
+    border-radius: 12px; font-size: 1rem; outline: none;
+    transition: border 0.2s;
+  }
+  input[type=text]:focus, select:focus { border-color: #667eea; }
+  .hint { font-size: 0.78rem; color: #999; margin-top: 4px; }
+  .btn {
+    padding: 14px; border: none; border-radius: 14px;
+    font-size: 1rem; font-weight: 700; cursor: pointer;
+    transition: transform 0.1s, opacity 0.2s;
+    width: 100%;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; }
+  .btn-success { background: #28c76f; color: #fff; }
+  .btn-danger  { background: #ea5455; color: #fff; }
+  .btn-outline { background: #fff; color: #667eea; border: 2px solid #667eea; }
+
+  /* Progress */
+  .progress-bar { background: #eee; border-radius: 99px; height: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #667eea, #764ba2); transition: width 0.4s; }
+  .progress-label { font-size: 0.82rem; color: #888; text-align: right; }
+
+  /* Quiz */
+  .lesson-badge {
+    background: #f0eeff; color: #667eea; padding: 4px 12px;
+    border-radius: 99px; font-size: 0.8rem; font-weight: 700;
+    text-align: center; align-self: center;
+  }
+  .korean-word {
+    font-size: 2.2rem; font-weight: 800; text-align: center;
+    color: #333; letter-spacing: 2px;
+    background: #f8f6ff; border-radius: 16px; padding: 20px;
+  }
+  .retry-notice {
+    background: #fff3cd; border: 1.5px solid #ffc107;
+    border-radius: 12px; padding: 10px 14px;
+    font-size: 0.85rem; color: #856404; text-align: center;
+  }
+  .spelling-row {
+    display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap; align-items: center;
+  }
+  .letter-box {
+    width: 44px; height: 52px; border-radius: 10px;
+    font-size: 1.4rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    background: #f0eeff; color: #4a3f8f;
+  }
+  .letter-input {
+    width: 44px; height: 52px; border-radius: 10px;
+    border: 2.5px solid #667eea; font-size: 1.4rem;
+    font-weight: 700; text-align: center; color: #4a3f8f;
+    outline: none; background: #fff; text-transform: uppercase;
+    -webkit-appearance: none;
+    padding: 0;
+  }
+  .letter-input:focus { border-color: #764ba2; background: #f0eeff; }
+  .letter-input.wrong { border-color: #ea5455; background: #fff5f5; animation: shake 0.3s; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-4px)} 75%{transform:translateX(4px)}
+  }
+  .buttons-row { display: flex; gap: 10px; }
+  .buttons-row .btn { flex: 1; }
+
+  /* Result */
+  .result-emoji { font-size: 4rem; text-align: center; }
+  .result-score { font-size: 2.5rem; font-weight: 800; text-align: center; color: #4a3f8f; }
+  .result-sub { font-size: 1rem; text-align: center; color: #666; }
+  .result-list { display: flex; flex-direction: column; gap: 8px; max-height: 240px; overflow-y: auto; }
+  .result-item {
+    display: flex; align-items: center; gap: 10px;
+    background: #f8f6ff; border-radius: 12px; padding: 10px 14px;
+    font-size: 0.95rem;
+  }
+  .result-item .icon { font-size: 1.1rem; }
+  .result-item .en { font-weight: 700; color: #4a3f8f; flex: 1; }
+  .result-item .ko { color: #888; font-size: 0.85rem; }
+
+  .loading { text-align: center; color: #888; font-size: 1rem; padding: 40px 0; }
+  .error { color: #ea5455; background: #fff5f5; border-radius: 12px; padding: 14px; font-size: 0.9rem; text-align: center; }
+  .screen { display: none; flex-direction: column; gap: 20px; }
+  .screen.active { display: flex; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <!-- SETUP -->
+  <div id="screen-setup" class="screen active">
+    <h1>✏️ 영어 스펠링 퀴즈</h1>
+    <div>
+      <label>구글 시트 ID</label>
+      <input type="text" id="sheet-id" placeholder="스프레드시트 ID를 입력하세요">
+      <div class="hint">URL에서 /d/ 뒤 ~ /edit 앞 문자열<br>예: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms</div>
+    </div>
+    <div>
+      <label>시트 이름 (탭 이름)</label>
+      <input type="text" id="sheet-name" placeholder="Sheet1" value="Sheet1">
+    </div>
+    <div id="lesson-area" style="display:none">
+      <label>단원 선택</label>
+      <select id="lesson-select"></select>
+    </div>
+    <button class="btn btn-primary" id="btn-load">📥 단어 불러오기</button>
+    <button class="btn btn-success" id="btn-start" style="display:none">🚀 퀴즈 시작!</button>
+    <div id="setup-msg"></div>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="screen-quiz" class="screen">
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="progress-label" id="progress-label"></div>
+    <div class="lesson-badge" id="quiz-lesson"></div>
+    <div class="korean-word" id="quiz-korean"></div>
+    <div id="retry-notice" class="retry-notice" style="display:none">🔄 틀렸어요! 빈칸 위치를 바꿨어요. 다시 도전!</div>
+    <div class="spelling-row" id="spelling-row"></div>
+    <div class="buttons-row">
+      <button class="btn btn-outline" id="btn-skip">건너뛰기</button>
+      <button class="btn btn-primary" id="btn-check">확인 ✓</button>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div id="screen-result" class="screen">
+    <div class="result-emoji" id="result-emoji"></div>
+    <div class="result-score" id="result-score"></div>
+    <div class="result-sub" id="result-sub"></div>
+    <div class="result-list" id="result-list"></div>
+    <button class="btn btn-primary" id="btn-restart">🔄 다시 풀기</button>
+    <button class="btn btn-outline" id="btn-home">🏠 처음으로</button>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const show = id => { $(id).classList.add('active'); };
+const hide = id => { $(id).classList.remove('active'); };
+
+let allWords = [], quizWords = [], current = 0;
+let results = []; // {word, correct}
+let retryMode = false;
+let retryAttempts = 0;
+const MAX_RETRY = 2;
+
+// ── Google Sheets ──────────────────────────────────────────
+async function fetchSheet(sheetId, sheetName) {
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('시트를 불러올 수 없습니다.');
+  const text = await res.text();
+  return parseCSV(text);
+}
+
+function parseCSV(text) {
+  return text.trim().split('\n').map(line => {
+    const cols = [];
+    let cur = '', inQ = false;
+    for (let i = 0; i < line.length; i++) {
+      const c = line[i];
+      if (c === '"') { inQ = !inQ; }
+      else if (c === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
+      else cur += c;
+    }
+    cols.push(cur.trim());
+    return cols;
+  }).filter(r => r.length >= 3 && r[1] && r[2]);
+}
+
+// ── Setup ──────────────────────────────────────────────────
+$('btn-load').onclick = async () => {
+  const id = $('sheet-id').value.trim();
+  const name = $('sheet-name').value.trim() || 'Sheet1';
+  if (!id) { showMsg('시트 ID를 입력해주세요.', 'error'); return; }
+  showMsg('<div class="loading">⏳ 불러오는 중...</div>', '');
+  $('btn-load').disabled = true;
+  try {
+    const rows = await fetchSheet(id, name);
+    allWords = rows.map(r => ({ lesson: r[0], en: r[1].replace(/"/g,''), ko: r[2].replace(/"/g,'') }));
+    const lessons = ['전체', ...new Set(allWords.map(w => w.lesson))];
+    const sel = $('lesson-select');
+    sel.innerHTML = lessons.map(l => `<option value="${l}">${l}</option>`).join('');
+    $('lesson-area').style.display = 'block';
+    $('btn-start').style.display = 'block';
+    showMsg(`✅ ${allWords.length}개 단어를 불러왔습니다!`, 'ok');
+  } catch(e) {
+    showMsg('❌ ' + e.message + '<br><small>시트가 "링크 공유" 상태인지 확인하세요.</small>', 'error');
+  }
+  $('btn-load').disabled = false;
+};
+
+function showMsg(html, type) {
+  const el = $('setup-msg');
+  el.innerHTML = `<div class="${type === 'error' ? 'error' : ''}" style="${type==='ok'?'color:#28c76f;font-weight:700;text-align:center':''}">` + html + '</div>';
+}
+
+$('btn-start').onclick = () => {
+  const lesson = $('lesson-select').value;
+  quizWords = shuffle(lesson === '전체' ? [...allWords] : allWords.filter(w => w.lesson === lesson));
+  if (!quizWords.length) { showMsg('해당 단원에 단어가 없습니다.', 'error'); return; }
+  results = [];
+  current = 0;
+  hide('screen-setup');
+  show('screen-quiz');
+  loadQuestion();
+};
+
+// ── Quiz ───────────────────────────────────────────────────
+function loadQuestion(retry = false) {
+  retryMode = retry;
+  if (!retry) retryAttempts = 0;
+  const w = quizWords[current];
+  $('quiz-lesson').textContent = '📖 ' + w.lesson;
+  $('quiz-korean').textContent = w.ko;
+  const pct = (current / quizWords.length * 100).toFixed(0);
+  $('progress-fill').style.width = pct + '%';
+  $('progress-label').textContent = `${current + 1} / ${quizWords.length}`;
+  $('retry-notice').style.display = retry ? 'block' : 'none';
+  renderSpelling(w.en, retry ? retryAttempts : 0);
+}
+
+function renderSpelling(word, attempt) {
+  const row = $('spelling-row');
+  row.innerHTML = '';
+  const letters = word.toUpperCase().split('');
+  const blanks = chooseBlanks(letters.length, attempt);
+  letters.forEach((ch, i) => {
+    if (blanks.includes(i)) {
+      const inp = document.createElement('input');
+      inp.type = 'text'; inp.maxLength = 1;
+      inp.className = 'letter-input';
+      inp.dataset.idx = i;
+      inp.dataset.answer = ch;
+      inp.addEventListener('input', e => {
+        e.target.value = e.target.value.toUpperCase().slice(-1);
+        if (e.target.value) focusNext(inp);
+      });
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Backspace' && !inp.value) focusPrev(inp);
+        if (e.key === 'Enter') $('btn-check').click();
+      });
+      row.appendChild(inp);
+    } else {
+      const box = document.createElement('div');
+      box.className = 'letter-box';
+      box.textContent = ch;
+      row.appendChild(box);
+    }
+  });
+  row.querySelectorAll('.letter-input')[0]?.focus();
+}
+
+function chooseBlanks(len, attempt) {
+  // attempt 0: hide ~half; attempt 1+: shift pattern
+  const count = Math.max(1, Math.ceil(len * 0.5));
+  const indices = [...Array(len).keys()];
+  // rotate starting index by attempt
+  const shifted = [...indices.slice(attempt % len), ...indices.slice(0, attempt % len)];
+  return shifted.slice(0, count);
+}
+
+function focusNext(inp) {
+  const inputs = [...$('spelling-row').querySelectorAll('.letter-input')];
+  const i = inputs.indexOf(inp);
+  if (i < inputs.length - 1) inputs[i+1].focus();
+}
+function focusPrev(inp) {
+  const inputs = [...$('spelling-row').querySelectorAll('.letter-input')];
+  const i = inputs.indexOf(inp);
+  if (i > 0) inputs[i-1].focus();
+}
+
+$('btn-check').onclick = () => {
+  const inputs = [...$('spelling-row').querySelectorAll('.letter-input')];
+  let allCorrect = true;
+  inputs.forEach(inp => {
+    const ok = inp.value === inp.dataset.answer;
+    inp.classList.toggle('wrong', !ok);
+    if (!ok) allCorrect = false;
+  });
+  if (allCorrect) {
+    const w = quizWords[current];
+    results.push({ word: w, correct: !retryMode });
+    next();
+  } else {
+    retryAttempts++;
+    if (retryAttempts <= MAX_RETRY) {
+      setTimeout(() => loadQuestion(true), 600);
+    } else {
+      // reveal and move on
+      inputs.forEach(inp => { inp.value = inp.dataset.answer; inp.style.color = '#ea5455'; });
+      results.push({ word: quizWords[current], correct: false });
+      setTimeout(next, 1200);
+    }
+  }
+};
+
+$('btn-skip').onclick = () => {
+  results.push({ word: quizWords[current], correct: false });
+  next();
+};
+
+function next() {
+  current++;
+  if (current >= quizWords.length) { showResult(); return; }
+  loadQuestion();
+}
+
+// ── Result ─────────────────────────────────────────────────
+function showResult() {
+  hide('screen-quiz');
+  show('screen-result');
+  const correct = results.filter(r => r.correct).length;
+  const total = results.length;
+  const pct = Math.round(correct / total * 100);
+  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 60 ? '😊' : '💪';
+  $('result-emoji').textContent = emoji;
+  $('result-score').textContent = `${correct} / ${total}`;
+  $('result-sub').textContent = `정답률 ${pct}%`;
+  const list = $('result-list');
+  list.innerHTML = results.map(r =>
+    `<div class="result-item">
+      <span class="icon">${r.correct ? '✅' : '❌'}</span>
+      <span class="en">${r.word.en}</span>
+      <span class="ko">${r.word.ko}</span>
+    </div>`
+  ).join('');
+}
+
+$('btn-restart').onclick = () => {
+  hide('screen-result');
+  show('screen-quiz');
+  quizWords = shuffle([...quizWords]);
+  results = []; current = 0;
+  loadQuestion();
+};
+$('btn-home').onclick = () => {
+  hide('screen-result');
+  show('screen-setup');
+};
+
+// ── Util ───────────────────────────────────────────────────
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+</script>
+</body>
+</html>
